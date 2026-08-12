@@ -1,0 +1,513 @@
+// Global Efecty v2 — Esquema Prisma (Postgres)
+//
+// Traducido 1:1 en funcionalidad desde www/database/import-phpmyadmin.sql (MySQL),
+// con estas mejoras deliberadas de seguridad/limpieza respecto al original:
+//   - Se ELIMINA `password_plain` (la v1 guardaba la contraseña en texto plano; nunca más).
+//   - `mfa_secret` se guarda cifrado a nivel de aplicación antes de persistir (ver lib/crypto).
+//   - Los ENUM de MySQL pasan a enums nativos de Postgres.
+//   - Los TINYINT(1) pasan a Boolean.
+//   - Los JSON pasan a Json (jsonb en Postgres).
+//   - Los nombres de columna se mantienen en snake_case vía @map para que la migración de datos
+//     (mysqldump -> csv -> COPY) sea más directa; los modelos usan camelCase (convención Prisma/TS).
+//
+// Ver v2/docs/MIGRACION-DATOS.md para el plan de migración de datos reales desde MySQL.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  user
+  superworker
+  superadmin
+}
+
+enum KycStatus {
+  none
+  pending
+  approved
+  rejected
+}
+
+enum TransactionType {
+  deposit
+  withdrawal
+  swap
+  stake
+  unstake
+  reward
+  adjustment
+  send
+  receive
+}
+
+enum TransactionStatus {
+  pending
+  completed
+  failed
+  cancelled
+}
+
+enum SwapStatus {
+  pending
+  completed
+  failed
+}
+
+enum StakeStatus {
+  active
+  completed
+  cancelled
+}
+
+enum PaymentMethodType {
+  bank
+  card
+  crypto
+}
+
+enum TicketStatus {
+  open
+  in_progress
+  resolved
+  closed
+}
+
+enum TicketPriority {
+  low
+  medium
+  high
+}
+
+enum ChatStatus {
+  open
+  waiting
+  closed
+}
+
+enum ChatSenderRole {
+  user
+  superworker
+  superadmin
+  system
+}
+
+enum DepositRequestType {
+  deposit
+  withdrawal
+}
+
+enum DepositRequestStatus {
+  pending
+  approved
+  rejected
+  completed
+}
+
+enum KycDocumentType {
+  id_front
+  id_back
+  id_selfie
+  proof_of_address
+}
+
+enum KycDocumentStatus {
+  pending
+  approved
+  rejected
+}
+
+enum NotificationType {
+  info
+  success
+  warning
+  error
+}
+
+// ---------------------------------------------------------------------------
+// Identidad / usuarios
+// ---------------------------------------------------------------------------
+
+model User {
+  id                  Int       @id @default(autoincrement())
+  fullName            String    @map("full_name") @db.VarChar(120)
+  email               String    @unique @db.VarChar(190)
+  passwordHash        String    @map("password_hash") @db.VarChar(255)
+  role                UserRole  @default(user)
+  assignedWorkerId    Int?      @map("assigned_worker_id")
+  officeId            Int?      @map("office_id")
+  country             String?   @db.VarChar(80)
+  phone               String?   @db.VarChar(30)
+  avatar              String?   @db.VarChar(255)
+  registrationIp      String?   @map("registration_ip") @db.VarChar(45)
+  lastLoginIp         String?   @map("last_login_ip") @db.VarChar(45)
+  emailVerified       Boolean   @default(false) @map("email_verified")
+  kycStatus           KycStatus @default(none) @map("kyc_status")
+  kycDocumentPath     String?   @map("kyc_document_path") @db.VarChar(255)
+  mfaEnabled          Boolean   @default(false) @map("mfa_enabled")
+  mfaSecretEncrypted  String?   @map("mfa_secret_encrypted") @db.VarChar(255)
+  forcePasswordChange Boolean   @default(false) @map("force_password_change")
+  allowBuy            Boolean   @default(true) @map("allow_buy")
+  allowSell           Boolean   @default(true) @map("allow_sell")
+  allowSend           Boolean   @default(true) @map("allow_send")
+  allowSwap           Boolean   @default(true) @map("allow_swap")
+  allowStaking        Boolean   @default(true) @map("allow_staking")
+  dashboardNote       String?   @map("dashboard_note")
+  isActive            Boolean   @default(true) @map("is_active")
+  lastLoginAt         DateTime? @map("last_login_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  office              Office?              @relation(fields: [officeId], references: [id])
+  wallets             Wallet[]
+  transactions        Transaction[]
+  swaps               Swap[]
+  userStakes          UserStake[]
+  paymentMethods      PaymentMethod[]
+  supportTickets      SupportTicket[]      @relation("TicketOwner")
+  supportMessagesSent SupportMessage[]
+  supportChats        SupportChat[]        @relation("ChatOwner")
+  supportChatMessages SupportChatMessage[]
+  depositRequests     DepositRequest[]
+  kycDocuments        KycDocument[]
+  adminLogs           AdminLog[]
+  notifications       Notification[]
+
+  @@index([role])
+  @@index([assignedWorkerId])
+  @@index([officeId])
+  @@map("users")
+}
+
+model Office {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(120)
+  code      String?   @db.VarChar(30)
+  codeDate  DateTime? @map("code_date") @db.Date
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  users          User[]
+  depositWallets OfficeDepositWallet[]
+  supportChats   SupportChat[]
+
+  @@map("offices")
+}
+
+model OfficeDepositWallet {
+  id        Int      @id @default(autoincrement())
+  officeId  Int      @map("office_id")
+  currency  String   @db.VarChar(10)
+  network   String   @db.VarChar(40)
+  address   String   @db.VarChar(255)
+  label     String?  @db.VarChar(120)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  office Office @relation(fields: [officeId], references: [id], onDelete: Cascade)
+
+  @@index([officeId, isActive])
+  @@index([officeId, currency])
+  @@map("office_deposit_wallets")
+}
+
+// ---------------------------------------------------------------------------
+// Wallet / transacciones
+// ---------------------------------------------------------------------------
+
+model Wallet {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  currency  String   @db.VarChar(10)
+  balance   Decimal  @default(0) @db.Decimal(24, 8)
+  address   String   @db.VarChar(128)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency])
+  @@map("wallets")
+}
+
+model Transaction {
+  id          Int               @id @default(autoincrement())
+  userId      Int               @map("user_id")
+  type        TransactionType
+  currency    String            @db.VarChar(10)
+  amount      Decimal           @db.Decimal(24, 8)
+  fee         Decimal           @default(0) @db.Decimal(24, 8)
+  status      TransactionStatus @default(pending)
+  reference   String?           @db.VarChar(64)
+  description String?
+  meta        Json?
+  adminId     Int?              @map("admin_id")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@map("transactions")
+}
+
+model Swap {
+  id           Int        @id @default(autoincrement())
+  userId       Int        @map("user_id")
+  fromCurrency String     @map("from_currency") @db.VarChar(10)
+  toCurrency   String     @map("to_currency") @db.VarChar(10)
+  fromAmount   Decimal    @map("from_amount") @db.Decimal(24, 8)
+  toAmount     Decimal    @map("to_amount") @db.Decimal(24, 8)
+  feePercent   Decimal    @default(0.10) @map("fee_percent") @db.Decimal(5, 2)
+  feeAmount    Decimal    @default(0) @map("fee_amount") @db.Decimal(24, 8)
+  rate         Decimal    @db.Decimal(24, 8)
+  status       SwapStatus @default(completed)
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("swaps")
+}
+
+model StakePlan {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(120)
+  currency   String   @db.VarChar(10)
+  apyPercent Decimal  @map("apy_percent") @db.Decimal(6, 2)
+  minAmount  Decimal  @default(0) @map("min_amount") @db.Decimal(24, 8)
+  lockDays   Int      @default(30) @map("lock_days")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  userStakes UserStake[]
+
+  @@map("stake_plans")
+}
+
+model UserStake {
+  id            Int         @id @default(autoincrement())
+  userId        Int         @map("user_id")
+  planId        Int         @map("plan_id")
+  amount        Decimal     @db.Decimal(24, 8)
+  rewardsEarned Decimal     @default(0) @map("rewards_earned") @db.Decimal(24, 8)
+  status        StakeStatus @default(active)
+  startedAt     DateTime    @default(now()) @map("started_at")
+  endsAt        DateTime    @map("ends_at")
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan StakePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@map("user_stakes")
+}
+
+model PaymentMethod {
+  id        Int               @id @default(autoincrement())
+  userId    Int               @map("user_id")
+  type      PaymentMethodType
+  label     String            @db.VarChar(120)
+  details   Json
+  isDefault Boolean           @default(false) @map("is_default")
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
+}
+
+model TransferBank {
+  id        Int      @id @default(autoincrement())
+  country   String   @db.VarChar(80)
+  name      String   @db.VarChar(120)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([country, name])
+  @@index([country, isActive])
+  @@map("transfer_banks")
+}
+
+// ---------------------------------------------------------------------------
+// Soporte / chat
+// ---------------------------------------------------------------------------
+
+model SupportTicket {
+  id         Int            @id @default(autoincrement())
+  userId     Int            @map("user_id")
+  subject    String         @db.VarChar(200)
+  status     TicketStatus   @default(open)
+  priority   TicketPriority @default(medium)
+  assignedTo Int?           @map("assigned_to")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  user     User             @relation("TicketOwner", fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportMessage[]
+
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id          Int      @id @default(autoincrement())
+  ticketId    Int      @map("ticket_id")
+  senderId    Int      @map("sender_id")
+  message     String
+  attachments Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("support_messages")
+}
+
+model SupportChat {
+  id            Int        @id @default(autoincrement())
+  userId        Int        @map("user_id")
+  officeId      Int        @map("office_id")
+  status        ChatStatus @default(open)
+  assignedTo    Int?       @map("assigned_to")
+  lastMessageAt DateTime?  @map("last_message_at")
+  closedAt      DateTime?  @map("closed_at")
+  closedBy      Int?       @map("closed_by")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  user     User                 @relation("ChatOwner", fields: [userId], references: [id], onDelete: Cascade)
+  office   Office               @relation(fields: [officeId], references: [id])
+  messages SupportChatMessage[]
+
+  @@index([userId, status])
+  @@index([officeId, status, lastMessageAt])
+  @@index([assignedTo])
+  @@map("support_chats")
+}
+
+model SupportChatMessage {
+  id         Int            @id @default(autoincrement())
+  chatId     Int            @map("chat_id")
+  senderId   Int            @map("sender_id")
+  senderRole ChatSenderRole @default(user) @map("sender_role")
+  message    String
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  chat   SupportChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatId, id])
+  @@map("support_chat_messages")
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(120)
+  email     String   @db.VarChar(190)
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(190)
+  token     String   @db.VarChar(64)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([token])
+  @@map("password_resets")
+}
+
+model PlatformSetting {
+  key       String   @id @db.VarChar(80)
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Depósitos / retiros / KYC / auditoría
+// ---------------------------------------------------------------------------
+
+model DepositRequest {
+  id                 Int                  @id @default(autoincrement())
+  userId             Int                  @map("user_id")
+  type               DepositRequestType
+  currency           String               @db.VarChar(10)
+  amount             Decimal              @db.Decimal(24, 8)
+  status             DepositRequestStatus @default(pending)
+  paymentMethodId    Int?                 @map("payment_method_id")
+  destinationAddress String?              @map("destination_address") @db.VarChar(255)
+  destinationChannel String?              @map("destination_channel") @db.VarChar(20)
+  destinationDetails Json?                @map("destination_details")
+  notes              String?
+  reviewedBy         Int?                 @map("reviewed_by")
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([type, destinationChannel, status])
+  @@map("deposit_requests")
+}
+
+model KycDocument {
+  id           Int               @id @default(autoincrement())
+  userId       Int               @map("user_id")
+  documentType KycDocumentType   @map("document_type")
+  filePath     String            @map("file_path") @db.VarChar(255)
+  status       KycDocumentStatus @default(pending)
+  reviewedBy   Int?              @map("reviewed_by")
+  reviewNote   String?           @map("review_note")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("kyc_documents")
+}
+
+model AdminLog {
+  id         Int      @id @default(autoincrement())
+  adminId    Int      @map("admin_id")
+  action     String   @db.VarChar(120)
+  targetType String?  @map("target_type") @db.VarChar(60)
+  targetId   Int?     @map("target_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("admin_logs")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  title     String           @db.VarChar(160)
+  body      String
+  type      NotificationType @default(info)
+  isRead    Boolean          @default(false) @map("is_read")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}

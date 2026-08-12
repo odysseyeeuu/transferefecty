@@ -1,26 +1,188 @@
 @import "tailwindcss";
 
+/* ── Transfer Efecty · Design Tokens ──
+ * Rebrand v2: paleta clara azul→cian tomada del logo (wallet + flecha,
+ * wordmark "TRANSFER EFECTY" en degradado azul-cian sobre blanco).
+ * Se mantienen los NOMBRES de variable de la v2 original (--ge-magenta,
+ * --ge-violet, etc.) para no tener que tocar cada componente — sólo se
+ * remapean los valores. Si llega el archivo de logo real, ajustar los
+ * hex exactos aquí (un solo lugar).
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Fondos — claro, con un tinte azul muy sutil en las capas elevadas */
+  --ge-bg-primary: #f7fafd;
+  --ge-bg-secondary: #eef4fb;
+  --ge-bg-elevated: #e4edf9;
+  --ge-bg-card: #ffffff;
+
+  /* Degradado de marca: azul profundo → azul brillante → cian (logo) */
+  --ge-gradient-start: #1d4ed8;
+  --ge-gradient-mid: #2563eb;
+  --ge-gradient-end: #22d3ee;
+  --ge-gradient-brand: linear-gradient(135deg, #1d4ed8 0%, #2563eb 45%, #22d3ee 100%);
+
+  /* Alias históricos (mismos nombres que v2 dark, valores nuevos) */
+  --ge-magenta: #2563eb;
+  --ge-violet: #1d4ed8;
+  --ge-violet-light: #3b82f6;
+  --ge-cyan: #22d3ee;
+  --ge-cyan-light: #67e8f9;
+  --ge-blue: #2563eb;
+
+  /* Texto oscuro sobre fondo claro */
+  --ge-text-primary: #0b1220;
+  --ge-text-secondary: #47566b;
+  --ge-text-muted: #7a8aa0;
+  --ge-text-inverse: #ffffff;
+
+  --ge-success: #16a34a;
+  --ge-warning: #b45309;
+  --ge-error: #dc2626;
+  --ge-border: rgba(11, 18, 32, 0.09);
+
+  --ge-font: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+  --ge-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --ge-radius-sm: 8px;
+  --ge-radius: 12px;
+  --ge-radius-lg: 20px;
+  --ge-radius-full: 9999px;
+
+  --ge-shadow-card: 0 1px 2px rgba(11, 18, 32, 0.04), 0 8px 24px -12px rgba(29, 78, 216, 0.12);
+
+  --background: var(--ge-bg-primary);
+  --foreground: var(--ge-text-primary);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-secondary: var(--ge-bg-secondary);
+  --color-bg-elevated: var(--ge-bg-elevated);
+  --color-bg-card: var(--ge-bg-card);
+
+  --color-magenta: var(--ge-magenta);
+  --color-violet: var(--ge-violet);
+  --color-violet-light: var(--ge-violet-light);
+  --color-cyan: var(--ge-cyan);
+  --color-cyan-light: var(--ge-cyan-light);
+  --color-blue: var(--ge-blue);
+
+  --color-text-primary: var(--ge-text-primary);
+  --color-text-secondary: var(--ge-text-secondary);
+  --color-text-muted: var(--ge-text-muted);
+
+  --color-success: var(--ge-success);
+  --color-warning: var(--ge-warning);
+  --color-error: var(--ge-error);
+  --color-border: var(--ge-border);
+
+  --font-sans: var(--ge-font);
+  --font-mono: var(--ge-font-mono);
+
+  --radius-sm: var(--ge-radius-sm);
+  --radius-md: var(--ge-radius);
+  --radius-lg: var(--ge-radius-lg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Transfer Efecty es "light-first" desde el rebrand — el logo está pensado
+   sobre fondo blanco. No alternamos por prefers-color-scheme todavía. */
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--ge-font);
+}
+
+.ge-gradient-text {
+  background: var(--ge-gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ge-card {
+  background: var(--ge-bg-card);
+  border: 1px solid var(--ge-border);
+  border-radius: var(--ge-radius);
+  box-shadow: var(--ge-shadow-card);
+}
+
+/* ── Glitch effect ──────────────────────────────────────────────────
+ * Uso: <span class="ge-glitch" data-text="Transfer Efecty">Transfer Efecty</span>
+ * Split RGB sutil en hover/focus — pensado para el wordmark y titulares,
+ * no para texto de lectura larga (rompe legibilidad si se abusa).
+ */
+.ge-glitch {
+  position: relative;
+  display: inline-block;
+}
+
+.ge-glitch::before,
+.ge-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  pointer-events: none;
+}
+
+.ge-glitch:hover::before,
+.ge-glitch:focus-visible::before {
+  opacity: 0.7;
+  color: var(--ge-cyan);
+  -webkit-text-fill-color: var(--ge-cyan);
+  animation: ge-glitch-shift-1 0.36s steps(2, jump-none) infinite;
+}
+
+.ge-glitch:hover::after,
+.ge-glitch:focus-visible::after {
+  opacity: 0.7;
+  color: var(--ge-violet);
+  -webkit-text-fill-color: var(--ge-violet);
+  animation: ge-glitch-shift-2 0.36s steps(2, jump-none) infinite;
+}
+
+@keyframes ge-glitch-shift-1 {
+  0% { transform: translate3d(0, 0, 0); clip-path: inset(0 0 70% 0); }
+  50% { transform: translate3d(-2px, 1px, 0); clip-path: inset(30% 0 40% 0); }
+  100% { transform: translate3d(0, 0, 0); clip-path: inset(60% 0 5% 0); }
+}
+
+@keyframes ge-glitch-shift-2 {
+  0% { transform: translate3d(0, 0, 0); clip-path: inset(60% 0 5% 0); }
+  50% { transform: translate3d(2px, -1px, 0); clip-path: inset(10% 0 55% 0); }
+  100% { transform: translate3d(0, 0, 0); clip-path: inset(0 0 70% 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ge-glitch::before,
+  .ge-glitch::after {
+    animation: none !important;
+  }
+}
+
+/* Scanline sutil para tarjetas "hero" — decorativo, muy discreto */
+.ge-scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.ge-scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(37, 99, 235, 0.035) 0px,
+    rgba(37, 99, 235, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
 }
