@@ -97,10 +97,17 @@ chat, panel admin completo) ya está implementada contra Postgres/Prisma real
 — ver el detalle ruta por ruta en `docs/PARIDAD.md`. Lo que queda pendiente es
 sobre todo **infraestructura de producción**, no funcionalidad:
 
-1. **Storage de archivos** (KYC, adjuntos de chat): hoy escribe a disco local
-   (`v2/storage/uploads`, ver `src/lib/storage.ts`) — funciona en desarrollo,
-   **no funciona en Vercel**. Antes de desplegar, cambiar `saveUploadedFile()`
-   por una subida a Vercel Blob o Cloudflare R2.
+1. ~~**Storage de archivos**~~ — ✅ **resuelto**. `src/lib/storage.ts` ahora
+   tiene dos backends y elige solo: si existe `BLOB_READ_WRITE_TOKEN` usa
+   **Vercel Blob** con `access: "private"`; si no, disco local (desarrollo).
+   Los blobs privados no son accesibles por URL — sólo a través de
+   `/storage/[...path]`, que verifica permisos (dueño / superadmin /
+   superworker de la misma oficina) antes de servir el archivo, y responde con
+   `Cache-Control: private, no-store`. En la BD se sigue guardando la misma
+   ruta relativa (`kyc/….jpg`) con cualquiera de los dos backends, así que
+   cambiar de uno a otro no requiere migrar datos.
+   **Para activarlo en producción:** crear un Blob store en Vercel
+   (Storage → Blob) — Vercel inyecta `BLOB_READ_WRITE_TOKEN` automáticamente.
 2. **Envío de correo** (reset de contraseña, notificaciones): Resend/Postmark.
    La v1 usaba `mail()` del hosting, poco confiable. `/app/forgot-password`
    sigue siendo un stub por esto.

@@ -91,9 +91,10 @@ con datos de verdad.
 - **Swap**: sólo el flujo instantáneo. El flujo de aprobación admin (con
   `swaps.admin_note`) no existía en el schema base y no se portó.
 - **Chat**: sin tiempo real (polling/WebSockets) ni adjuntos de imagen.
-- **KYC/chat**: archivos en disco local (`v2/storage/uploads`) — **no funciona en
-  Vercel tal cual**, hay que migrar a Vercel Blob/R2 antes de desplegar a
-  producción (ver `docs/ARQUITECTURA.md`).
+- **Archivos KYC**: resuelto — `src/lib/storage.ts` usa Vercel Blob
+  (`access: "private"`) cuando existe `BLOB_READ_WRITE_TOKEN`, y disco local
+  en desarrollo. Se sirven sólo vía `/storage/[...path]` con verificación de
+  permisos. Ver `docs/ARQUITECTURA.md`.
 - **Correo**: `src/lib/mail.ts` implementa toda la lógica (reset de
   contraseña, etc.) pero el transporte real está stub — sin `RESEND_API_KEY`
   configurado, sólo hace `console.warn` con el contenido. Funciona de punta a
