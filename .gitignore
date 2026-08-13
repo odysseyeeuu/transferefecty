@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+# cualquier archivo que TERMINE en .env (ej. transferefecty-production.env):
+# la regla `.env*` de arriba sólo cubre los que EMPIEZAN con .env
+*.env
 
 # vercel
 .vercel
