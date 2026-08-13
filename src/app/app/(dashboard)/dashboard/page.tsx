@@ -70,8 +70,9 @@ export default async function DashboardPage() {
           })}
           {wallets.length === 0 && (
             <p className="text-sm text-[var(--ge-text-secondary)]">
-              Aún no tienes wallets. (Deberían crearse automáticamente al registrarte —
-              revisa el seed / migración de datos si ves esto en producción.)
+              {user.role === "user"
+                ? "Aún no tienes wallets. Contacta a tu oficina si esto no cambia en unos minutos."
+                : "Las cuentas de staff no manejan wallets propias."}
             </p>
           )}
         </div>
