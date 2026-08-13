@@ -12,7 +12,7 @@ export default async function AdminGeneralPage() {
   await requireRole(["superadmin"]);
   const settings = await getSettings({
     site_name: "Transfer Efecty",
-    support_email: "support@globalefecty.com",
+    support_email: "support@transferefecty.com",
     swap_fee_percent: "0.1",
     announcement: "",
     maintenance_mode: "0",
