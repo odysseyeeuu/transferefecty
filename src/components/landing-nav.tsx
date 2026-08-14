@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { GlitchText } from "@/components/motion/glitch-text";
+import { LogoLink } from "@/components/logo";
 
 const LINKS = [
   { href: "#features", label: "Funciones" },
@@ -20,7 +20,7 @@ export function LandingNav() {
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--ge-border)] bg-[var(--ge-bg-primary)]/80 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <GlitchText text="Transfer Efecty" as="span" className="text-lg font-bold" />
+        <LogoLink href="/" height={38} priority className="shrink-0" />
 
         <nav className="hidden items-center gap-6 md:flex">
           {LINKS.map((l) => (

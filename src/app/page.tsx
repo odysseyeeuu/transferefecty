@@ -20,9 +20,10 @@ import {
 } from "lucide-react";
 import { LandingNav } from "@/components/landing-nav";
 import { ContactForm } from "@/components/contact-form";
-import { GlitchText } from "@/components/motion/glitch-text";
+import { SiteFooter } from "@/components/site-footer";
+import { HeroVisual } from "@/components/landing/hero-visual";
 import { FadeIn, StaggerGroup, staggerItem } from "@/components/motion/fade-in";
-import { MotionDiv } from "@/components/motion/motion-primitives";
+import { MotionDiv, MotionH1 } from "@/components/motion/motion-primitives";
 import { getMarketData } from "@/lib/market";
 import { CRYPTO_CURRENCIES } from "@/lib/config/currencies";
 import { db } from "@/lib/db";
@@ -132,66 +133,144 @@ async function getFeaturedStakePlans() {
 export default async function LandingPage() {
   const [market, stakePlans] = await Promise.all([getMarketData(), getFeaturedStakePlans()]);
 
+  // Monedas del mockup del hero: saldos de ejemplo, pero con la variación 24h
+  // real del mercado para que no se vea como una maqueta congelada.
+  const HERO_AMOUNTS: Record<string, string> = {
+    BTC: "0,2451",
+    ETH: "3,80",
+    USDT: "5.240,00",
+    SOL: "42,5",
+  };
+  const heroCoins = ["BTC", "ETH", "USDT", "SOL"].map((code) => {
+    const meta = CRYPTO_CURRENCIES.find((c) => c.code === code);
+    const row = market.find((m) => m.code === code);
+    return {
+      code,
+      name: meta?.name ?? code,
+      amount: HERO_AMOUNTS[code],
+      change: row?.change24h ?? 0,
+      color: meta?.color ?? "#2563EB",
+    };
+  });
+
   return (
     <>
       <LandingNav />
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden px-6 pb-20 pt-16 sm:pt-24">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-30"
-            style={{ background: "var(--ge-gradient-brand)", filter: "blur(120px)" }}
-          />
-          <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-8 text-center">
-            <GlitchText
-              text="TRANSFER EFECTY"
-              className="text-xs font-bold uppercase tracking-[0.3em]"
+        <section className="relative overflow-hidden px-6 pb-20 pt-14 sm:pt-20">
+          {/* Fondo: malla + orbes de marca */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div
+              className="absolute -left-24 -top-24 size-[440px] rounded-full opacity-25 blur-3xl"
+              style={{ background: "radial-gradient(circle, #2563EB, transparent 70%)" }}
             />
-            <span className="ge-card inline-flex items-center gap-2 px-4 py-1.5 text-xs font-medium text-[var(--ge-text-secondary)]">
-              <span className="size-1.5 animate-pulse rounded-full bg-[var(--ge-success)]" />
-              Plataforma cripto global · Segura y en español
-            </span>
-            <h1 className="max-w-3xl text-4xl font-bold text-[var(--ge-text-primary)] sm:text-6xl">
-              Opera, ahorra y envía cripto{" "}
-              <span className="ge-gradient-text">con claridad total</span>
-            </h1>
-            <p className="max-w-xl text-[var(--ge-text-secondary)]">
-              Wallet unificada para swap, CDT y transferencias. Experiencia clara, comisiones desde{" "}
-              <strong className="text-[var(--ge-text-primary)]">0.1%</strong> y control desde tu oficina digital.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/app/register"
-                className="inline-flex items-center gap-2 rounded-[var(--ge-radius)] px-6 py-3 font-medium text-[var(--ge-text-inverse)]"
-                style={{ background: "var(--ge-gradient-brand)" }}
+            <div
+              className="absolute -right-20 top-24 size-[380px] rounded-full opacity-25 blur-3xl"
+              style={{ background: "radial-gradient(circle, #22D3EE, transparent 70%)" }}
+            />
+            <div
+              className="absolute inset-0 opacity-[0.35]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, rgba(37,99,235,.07) 1px, transparent 1px), linear-gradient(to bottom, rgba(37,99,235,.07) 1px, transparent 1px)",
+                backgroundSize: "56px 56px",
+                maskImage: "radial-gradient(ellipse at 50% 0%, #000 55%, transparent 85%)",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse at 50% 0%, #000 55%, transparent 85%)",
+              }}
+            />
+          </div>
+
+          <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.05fr_.95fr]">
+            {/* Columna de texto */}
+            <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
+              <MotionDiv
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                <Rocket className="size-4" /> Crear cuenta gratis
-              </Link>
-              <Link
-                href="/app/login"
-                className="ge-card inline-flex items-center gap-2 rounded-[var(--ge-radius)] px-6 py-3 font-medium text-[var(--ge-text-primary)]"
+                <span className="ge-card inline-flex items-center gap-2 px-4 py-1.5 text-xs font-medium text-[var(--ge-text-secondary)]">
+                  <span className="size-1.5 animate-pulse rounded-full bg-[var(--ge-success)]" />
+                  Plataforma cripto global · Segura y en español
+                </span>
+              </MotionDiv>
+
+              <MotionH1
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                className="max-w-2xl text-4xl font-bold leading-[1.08] tracking-tight text-[var(--ge-text-primary)] sm:text-6xl"
               >
-                <LogIn className="size-4" /> Iniciar sesión
-              </Link>
+                Tu dinero se mueve{" "}
+                <span className="ge-gradient-text">a la velocidad de internet</span>
+              </MotionH1>
+
+              <MotionDiv
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.16 }}
+                className="max-w-xl"
+              >
+                <p className="text-lg text-[var(--ge-text-secondary)]">
+                  Envía, intercambia y haz crecer tus criptomonedas desde una sola billetera.
+                  Comisiones desde{" "}
+                  <strong className="text-[var(--ge-text-primary)]">0,1%</strong>, respaldo de tu
+                  oficina y soporte en español.
+                </p>
+              </MotionDiv>
+
+              <MotionDiv
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.24 }}
+                className="flex flex-wrap items-center justify-center gap-3 lg:justify-start"
+              >
+                <MotionDiv whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
+                  <Link
+                    href="/app/register"
+                    className="inline-flex items-center gap-2 rounded-[var(--ge-radius)] px-6 py-3.5 font-semibold text-[var(--ge-text-inverse)] shadow-lg shadow-blue-600/20"
+                    style={{ background: "var(--ge-gradient-brand)" }}
+                  >
+                    <Rocket className="size-4" /> Crear cuenta gratis
+                  </Link>
+                </MotionDiv>
+                <Link
+                  href="/app/login"
+                  className="ge-card inline-flex items-center gap-2 rounded-[var(--ge-radius)] px-6 py-3.5 font-semibold text-[var(--ge-text-primary)]"
+                >
+                  <LogIn className="size-4" /> Iniciar sesión
+                </Link>
+              </MotionDiv>
+
+              <MotionDiv
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.34 }}
+              >
+                <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-[var(--ge-text-muted)] lg:justify-start">
+                  <li className="flex items-center gap-1.5">
+                    <IdCard className="size-3.5" /> KYC verificado
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Lock className="size-3.5" /> Cifrado E2E
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <ArrowLeftRight className="size-3.5" /> Swap ágil
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <PiggyBank className="size-3.5" /> CDT cripto
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <Headset className="size-3.5" /> Soporte 24/7
+                  </li>
+                </ul>
+              </MotionDiv>
             </div>
-            <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[var(--ge-text-muted)]">
-              <li className="flex items-center gap-1.5">
-                <IdCard className="size-3.5" /> KYC verificado
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Lock className="size-3.5" /> Cifrado E2E
-              </li>
-              <li className="flex items-center gap-1.5">
-                <ArrowLeftRight className="size-3.5" /> Swap ágil
-              </li>
-              <li className="flex items-center gap-1.5">
-                <PiggyBank className="size-3.5" /> CDT cripto
-              </li>
-              <li className="flex items-center gap-1.5">
-                <Headset className="size-3.5" /> Soporte 24/7
-              </li>
-            </ul>
+
+            {/* Columna visual */}
+            <HeroVisual coins={heroCoins} />
           </div>
         </section>
 
@@ -454,10 +533,7 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-[var(--ge-border)] px-6 py-10 text-center text-xs text-[var(--ge-text-muted)]">
-        <p className="ge-gradient-text mb-2 text-sm font-bold">Transfer Efecty</p>
-        <p>© {new Date().getFullYear()} Transfer Efecty. Todos los derechos reservados.</p>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

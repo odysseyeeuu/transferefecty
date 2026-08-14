@@ -21,6 +21,7 @@ import {
   Database,
   ArrowLeft,
 } from "lucide-react";
+import { LogoLink } from "@/components/logo";
 
 interface NavItem {
   href: string;
@@ -95,13 +96,12 @@ export function AdminSidebar({ role }: { role: string }) {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-[var(--ge-border)] bg-[var(--ge-bg-secondary)] px-3 py-4">
-      <Link
-        href="/admin/dashboard"
-        data-text="Transfer Efecty · Admin"
-        className="ge-glitch ge-gradient-text px-2 pb-6 text-lg font-bold"
-      >
-        Transfer Efecty · Admin
-      </Link>
+      <div className="flex flex-col gap-1.5 px-2 pb-6">
+        <LogoLink href="/admin/dashboard" height={32} priority />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--ge-cyan)]">
+          Panel administrativo
+        </span>
+      </div>
 
       <nav className="flex-1 space-y-6 overflow-y-auto">
         {NAV_GROUPS.map((group) => {

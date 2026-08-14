@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 112" width="420" height="112" role="img" aria-label="Transfer Efecty — Crypto Wallet">
+  <defs>
+    <linearGradient id="hWallet" x1="30" y1="22" x2="118" y2="94" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1D4ED8"/>
+      <stop offset="0.55" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="hFlap" x1="34" y1="16" x2="104" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1E40AF"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="hArrow" x1="46" y1="54" x2="96" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="hSpeed" x1="0" y1="54" x2="46" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.15"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="hWord" x1="140" y1="50" x2="400" y2="86" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1D4ED8"/>
+      <stop offset="0.5" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Isotipo -->
+  <g transform="translate(0,6)">
+    <g fill="url(#hSpeed)">
+      <rect x="2"  y="34" width="16" height="7" rx="3.5"/>
+      <rect x="14" y="45" width="26" height="7" rx="3.5"/>
+      <rect x="6"  y="56" width="18" height="7" rx="3.5"/>
+      <rect x="24" y="23" width="14" height="7" rx="3.5"/>
+      <rect x="20" y="67" width="12" height="7" rx="3.5"/>
+    </g>
+    <path d="M40 22.5 L96 8.5 a5 5 0 0 1 6.2 4.2 L104 26 H40 Z" fill="url(#hFlap)"/>
+    <rect x="36" y="24" width="76" height="60" rx="12" fill="url(#hWallet)"/>
+    <path d="M46 51.5 h30 l-9.5 -9.5 5.5 -5.5 L91 51.5 71.5 71 66 65.5 75.5 56 H46 Z" fill="url(#hArrow)"/>
+    <rect x="86" y="42" width="34" height="24" rx="10" fill="#1E3A8A"/>
+    <circle cx="99" cy="54" r="6" fill="#F1F5F9"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="136" y="45"
+        font-family="Inter, Poppins, system-ui, -apple-system, sans-serif"
+        font-size="27" font-weight="600" letter-spacing="9.5"
+        fill="#0B1220" fill-opacity="0.8">TRANSFER</text>
+  <text x="136" y="83"
+        font-family="Inter, Poppins, system-ui, -apple-system, sans-serif"
+        font-size="38" font-weight="800" letter-spacing="2"
+        fill="url(#hWord)">EFECTY</text>
+
+  <!-- Bajada centrada bajo el wordmark, con filetes -->
+  <g>
+    <rect x="136" y="98" width="34" height="2.4" rx="1.2" fill="#2563EB" fill-opacity="0.45"/>
+    <text x="182" y="103"
+          font-family="Inter, Poppins, system-ui, -apple-system, sans-serif"
+          font-size="10.5" font-weight="500" letter-spacing="4.2"
+          fill="#7A8AA0">CRYPTO WALLET</text>
+    <rect x="352" y="98" width="34" height="2.4" rx="1.2" fill="#22D3EE" fill-opacity="0.55"/>
+  </g>
+</svg>

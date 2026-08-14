@@ -18,6 +18,7 @@ import {
   ShieldHalf,
   LogOut,
 } from "lucide-react";
+import { LogoLink } from "@/components/logo";
 
 interface NavItem {
   href: string;
@@ -65,13 +66,9 @@ export function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-[var(--ge-border)] bg-[var(--ge-bg-secondary)] px-3 py-4">
-      <Link
-        href="/app/dashboard"
-        data-text="Transfer Efecty"
-        className="ge-glitch ge-gradient-text px-2 pb-6 text-lg font-bold"
-      >
-        Transfer Efecty
-      </Link>
+      <div className="px-2 pb-6">
+        <LogoLink href="/app/dashboard" height={34} priority />
+      </div>
 
       <nav className="flex-1 space-y-6 overflow-y-auto">
         {NAV_GROUPS.map((group) => (
