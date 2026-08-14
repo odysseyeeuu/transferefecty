@@ -36,7 +36,7 @@ con datos de verdad.
 | `/app/stake` | `/app/stake` | ✅ | Crear CDT + retirar (unstake) con cálculo de rendimiento proporcional |
 | `/app/market` | `/app/market` | ✅ | Precios en vivo (CoinGecko, cache 120s vía Next.js Data Cache) |
 | `/app/transactions` | `/app/transactions` | ✅ | Últimos 50 movimientos |
-| `/app/payments` | `/app/payments` | ✅ | Depósito/retiro — **sólo canal crypto** (bank/card con métodos de pago guardados no se portó) |
+| `/app/payments` | `/app/payments` | ✅ | Depósito/retiro — **sólo canal crypto** (bank/card con métodos de pago guardados no se portó). Muestra las direcciones de depósito de la oficina del cliente (equivalente al `officeDepositMap` de la v1) con botón de copiar |
 | `/app/marketplace/swap` | `/app/marketplace/swap` | ✅ | Redirect a `/app/swap` — igual que la v1 (mismo controller) |
 | `/app/marketplace/stake/plans` | `/app/marketplace/stake/plans` | ✅ | Redirect a `/app/stake` — igual que la v1 (mismo controller) |
 
@@ -44,7 +44,7 @@ con datos de verdad.
 
 | Ruta v1 | Ruta v2 | Estado | Notas |
 |---|---|---|---|
-| `/app/chat` | `/app/chat` | ✅ | Chat en vivo por oficina — **sin polling/realtime** (recarga tras enviar) y sin adjuntos de imagen |
+| `/app/chat` | `/app/chat` | ✅ | Chat en vivo por oficina, con refresco automático cada 7s (`router.refresh()`, se pausa si la pestaña no está visible). Sin adjuntos de imagen |
 | `/app/support` + ticket | `/app/support`, `/app/support/ticket/[id]` | ✅ | Crear ticket, ver hilo, responder |
 | `/app/verification` | `/app/verification` | ✅ | Subida KYC (4 documentos) + estado |
 | `/app/notifications` | `/app/notifications` | ✅ | Lista + marcar leída/todas |
@@ -64,16 +64,16 @@ con datos de verdad.
 | `/admin/user/[id]` | `/admin/user/[id]` | ✅ | Perfil, permisos (`allow_*`), rol/oficina (SuperAdmin), reset de contraseña, eliminar |
 | `/admin/workers`, `/admin/create-worker` | ídem | ✅ | Listado + alta de SuperWorker |
 | `/admin/admins`, `/admin/create-admin` | ídem | ✅ | Listado + alta de SuperAdmin |
-| `/admin/offices` | `/admin/offices` | ✅ | CRUD + código diario vigente. La sub-vista de "producción por rango de fechas" de la v1 no se portó |
+| `/admin/offices` | `/admin/offices` | ✅ | CRUD + código diario vigente. La producción por rango de fechas vive en `/admin/production` |
 | `/admin/deposit-wallets` | `/admin/deposit-wallets` | ✅ | SuperWorker administra las de su oficina; SuperAdmin ve todas (solo lectura) |
 | `/admin/transfer-banks` | `/admin/transfer-banks` | ✅ | CRUD |
 | `/admin/tickets`, `/admin/ticket/[id]` | ídem | ✅ | Bandeja + detalle + respuesta + cambio de estado |
-| `/admin/chats`, `/admin/chat/[id]` | ídem | ✅ | Bandeja + detalle + respuesta + cerrar |
+| `/admin/chats`, `/admin/chat/[id]` | ídem | ✅ | Bandeja + detalle + respuesta + cerrar, con refresco automático cada 7s |
 | `/admin/notifications` | `/admin/notifications` | ✅ | Envío a un usuario / oficina / todos, con filtro KYC (simplificado: "sin documentos" en vez de "< 4 tipos subidos") |
 | `/admin/general` | `/admin/general` | ✅ | `platform_settings` (nombre, fees, mínimos, anuncio, mantenimiento) |
 | `/admin/actions` | `/admin/actions` | ✅ | Lectura de `admin_logs` |
 | `/admin/database` | `/admin/database` | ⬜ | No se portará tal cual — usar Prisma Studio (`npm run db:studio`) o el panel de Neon en su lugar |
-| `/admin/production` | `/admin/production` | ⬜ | Stub — reporte de producción por oficina/fecha |
+| `/admin/production` | `/admin/production` | ✅ | Clientes nuevos, depósitos (nº y monto), retiros y volumen de swaps por oficina, con filtro de fechas. SuperWorker ve sólo su oficina |
 
 ## Landing pública
 
@@ -90,7 +90,9 @@ con datos de verdad.
   guardados y alta "al vuelo" de método de pago no se portaron.
 - **Swap**: sólo el flujo instantáneo. El flujo de aprobación admin (con
   `swaps.admin_note`) no existía en el schema base y no se portó.
-- **Chat**: sin tiempo real (polling/WebSockets) ni adjuntos de imagen.
+- **Chat**: sin adjuntos de imagen. El refresco es por polling ligero
+  (`router.refresh()` cada 7s, pausado en pestañas ocultas), no WebSockets —
+  suficiente para el volumen esperado y sin infraestructura extra.
 - **Archivos KYC**: resuelto — `src/lib/storage.ts` usa Vercel Blob
   (`access: "private"`) cuando existe `BLOB_READ_WRITE_TOKEN`, y disco local
   en desarrollo. Se sirven sólo vía `/storage/[...path]` con verificación de
@@ -100,7 +102,9 @@ con datos de verdad.
   configurado, sólo hace `console.warn` con el contenido. Funciona de punta a
   punta apenas se agregue esa env var, no hay que tocar el código que lo llama.
 - **`/admin/database`**: reemplazado por Prisma Studio / panel de Neon.
-- **`/admin/production`, oficinas → producción por rango**: reportes no portados.
+- **Montos en el reporte de producción**: se suman sin convertir a una moneda
+  común (mezclan BTC con USDT), igual que en la v1 — son un indicador de
+  actividad, no un total financiero.
 
 ## Cómo usar este documento
 

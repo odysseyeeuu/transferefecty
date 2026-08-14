@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
 import { openOrCreateChatForUser } from "@/lib/support-chat";
 import { sendChatMessage, closeChatClient } from "@/app/actions/chat";
+import { ChatAutoRefresh } from "@/components/chat-auto-refresh";
 
 export const metadata: Metadata = { title: "Chat en vivo" };
 
@@ -32,6 +33,7 @@ export default async function ChatPage() {
 
   return (
     <div className="flex max-w-2xl flex-col gap-4">
+      {chat.status !== "closed" && <ChatAutoRefresh />}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--ge-text-primary)]">Chat en vivo</h1>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
 import { DepositForm, WithdrawalForm } from "./payment-forms";
+import { DepositAddresses } from "./deposit-addresses";
 
 export const metadata: Metadata = { title: "Depositar / Retirar" };
 
@@ -14,11 +15,20 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default async function PaymentsPage() {
   const user = await requireUser();
-  const requests = await db.depositRequest.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
+  const [requests, depositWallets] = await Promise.all([
+    db.depositRequest.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    }),
+    user.officeId
+      ? db.officeDepositWallet.findMany({
+          where: { officeId: user.officeId, isActive: true },
+          orderBy: [{ currency: "asc" }, { network: "asc" }],
+          select: { id: true, currency: true, network: true, address: true, label: true },
+        })
+      : Promise.resolve([]),
+  ]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,6 +40,13 @@ export default async function PaymentsPage() {
           Las solicitudes las revisa un SuperWorker/SuperAdmin antes de acreditarse.
         </p>
       </div>
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ge-text-muted)]">
+          Direcciones para depositar
+        </h2>
+        <DepositAddresses wallets={depositWallets} />
+      </section>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <DepositForm />

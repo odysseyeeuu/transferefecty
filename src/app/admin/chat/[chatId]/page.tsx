@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/dal";
 import { db } from "@/lib/db";
 import { officeScopeId } from "@/lib/office-scope";
 import { adminReplyChat, adminCloseChat } from "@/app/actions/chat";
+import { ChatAutoRefresh } from "@/components/chat-auto-refresh";
 
 export const metadata: Metadata = { title: "Admin · Chat" };
 
@@ -37,6 +38,7 @@ export default async function AdminChatDetailPage({
 
   return (
     <div className="flex max-w-2xl flex-col gap-4">
+      {chat.status !== "closed" && <ChatAutoRefresh />}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--ge-text-primary)]">
